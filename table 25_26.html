@@ -1,0 +1,321 @@
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+<style type="text/css">/* Widget Container */
+        .competition-finder {
+            font-family: Arial, sans-serif;
+            max-width: 1440px;
+            margin: 0 auto;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .competition-finder h2 {
+            color: #001489;
+            font-weight: 800;
+            font-style: italic;
+            margin-bottom: 20px;
+            font-size: 48px;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .filter-group {
+            flex: 1 1 200px;
+            min-width: 150px;
+            max-width: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #201747;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .search-btn {
+            background: #001489;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 6px;
+        }
+        
+        .search-btn:hover {
+            background: #232769;
+        }
+
+        /* Results Section */
+        .results-info {
+            margin: 20px 0;
+            font-style: italic;
+            color: #666;
+        }
+        
+        /* Desktop Table Layout */
+        .competition-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .competition-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        
+        .competition-table th:nth-child(1) { width: 30%; } /* Competition Name */
+        .competition-table th:nth-child(2) { width: 10%; } /* Date */
+        .competition-table th:nth-child(3) { width: 25%; } /* Location */
+        .competition-table th:nth-child(4) { width: 25%; } /* Skater */
+        .competition-table th:nth-child(5) { width: 10%; } /* Discipline */
+
+        .competition-table th,
+        .competition-table td {
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+            border: 1px solid #ddd;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+        }
+        
+        .competition-table th {
+            background: #f1f1f1;
+            font-weight: bold;
+            color: #DA291C;
+        }
+        
+        .competition-table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .event-name {
+            font-weight: bold;
+            color: #001489;
+        }
+        
+        .event-link {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        
+    
+        .event-link:hover {
+            text-decoration: underline;
+        }
+        
+        .discipline-badge {
+            background: #9ADBE8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #4863AE;
+            display: inline-block;
+        }
+
+        /* Responsive Design: Mobile View */
+        @media (max-width: 768px) {
+            .filter-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .filter-group {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+
+            .filter-group label { font-size: 14px; }
+            .filter-group input { font-size: 14px; }
+
+            /* Hide the table headers on mobile */
+            .competition-table thead {
+                display: none;
+            }
+
+            /* Display table rows as blocks (cards) */
+            .competition-table, .competition-table tbody, .competition-table tr {
+                display: block;
+                width: 100%;
+            }
+
+            /* Style individual cards */
+            .competition-table tr {
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                background-color: #fff;
+                padding: 10px;
+            }
+
+            /* Each table cell becomes a block with a label */
+            .competition-table td {
+                border: none;
+                position: relative;
+                padding-left: 100px;
+                min-height: 25px;
+                display: flex;
+                align-items: center;
+                border-bottom: 1px solid #eee;
+            }
+            
+            /* Create the labels from the data attributes */
+            .competition-table td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                font-weight: bold;
+                color: #DA291C;
+                width: 90px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            /* Remove the bottom border for the last cell */
+            .competition-table tr td:last-child {
+                border-bottom: none;
+            }
+        }
+</style>
+<div class="competition-finder">
+<h2>International Assignments</h2>
+
+<div class="filter-section">
+<div class="filter-group"><label for="competitionName">Competition Name</label> <input id="competitionName" name="competitionName" placeholder="e.g., Skate America" type="text" /></div>
+
+<div class="filter-group"><label for="skaterName">Skater's Last Name</label> <input id="skaterName" name="skaterName" placeholder="e.g., Brown" type="text" /></div>
+
+<div class="filter-group"><button class="search-btn" onclick="filterAssignments()" type="button">Search</button></div>
+</div>
+
+<div class="results-info" id="resultsInfo">Loading data...</div>
+
+<div class="competition-table-wrapper">
+<table class="competition-table">
+	<thead>
+		<tr>
+			<th>Competition</th>
+			<th>Date</th>
+			<th>Location</th>
+			<th>Skater</th>
+			<th>Discipline</th>
+		</tr>
+	</thead>
+	<tbody id="competitionResults">
+	</tbody>
+</table>
+</div>
+</div>
+<script>
+    let assignmentsData = [];
+
+    async function fetchAssignments() {
+        // You MUST replace this with the published CSV URL from your Google Sheet.
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9FRxYE8Vh7gaJG_vYJ8Fgj15UI-6e6YAf_AS3KDg5fAaVCZMfHvQbGH5AWIPQc7BxcELxcyZTMd1J/pub?gid=0&single=true&output=csv';
+        
+        try {
+            const response = await fetch(csvUrl);
+            const csvText = await response.text();
+            
+            // Parse CSV data
+            const rows = csvText.trim().split('\n').slice(1); // Skip header row
+            assignmentsData = rows.map(row => {
+                const columns = row.split(',');
+                return {
+                    competition: columns[0].trim(),
+                    date: columns[1].trim(),
+                    location: columns[2].trim(),
+                    skaters: columns[3].trim().split(';'), // Use a different separator like ';' for multiple skaters
+                    discipline: columns[4].trim(),
+                };
+            });
+            
+            filterAssignments(); // Populate the table with the fetched data
+            document.getElementById('resultsInfo').textContent = `Showing ${assignmentsData.length} assignments`;
+        } catch (error) {
+            document.getElementById('resultsInfo').textContent = 'Failed to load data. Please check the URL and your internet connection.';
+            console.error('Error fetching assignments:', error);
+        }
+    }
+
+    function filterAssignments() {
+        const competitionName = document.getElementById('competitionName').value.toLowerCase();
+        const skaterName = document.getElementById('skaterName').value.toLowerCase();
+        
+        let filteredAssignments = assignmentsData.filter(assignment => {
+            if (competitionName && !assignment.competition.toLowerCase().includes(competitionName)) {
+                return false;
+            }
+
+            if (skaterName) {
+                const foundSkater = assignment.skaters.some(skater => {
+                    const lastName = skater.split(' ').slice(-1)[0].toLowerCase();
+                    return lastName.includes(skaterName);
+                });
+                if (!foundSkater) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        displayAssignments(filteredAssignments);
+        updateResultsInfo(filteredAssignments.length);
+    }
+
+    function displayAssignments(assignments) {
+        const tbody = document.getElementById('competitionResults');
+        tbody.innerHTML = '';
+        if (assignments.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No assignments found.</td></tr>';
+            return;
+        }
+        assignments.forEach(assignment => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td data-label="Competition">${assignment.competition}</td>
+                <td data-label="Date">${assignment.date}</td>
+                <td data-label="Location">${assignment.location}</td>
+                <td data-label="Skater">${assignment.skaters.join(', ')}</td>
+                <td data-label="Discipline"><span class="discipline-badge">${assignment.discipline}</span></td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function updateResultsInfo(count) {
+        const resultsInfo = document.getElementById('resultsInfo');
+        resultsInfo.textContent = `Showing ${count} ${count === 1 ? 'assignment' : 'assignments'}`;
+    }
+
+    // Load data from Google Sheet when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchAssignments();
+    });
+</script>
