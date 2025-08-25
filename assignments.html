@@ -314,7 +314,11 @@
         assignments.forEach(assignment => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td data-label="Competition">${assignment.competition}</td>
+                <td data-label="Competition">
+                    ${assignment.competition}<br>
+                    ${assignment.location}<br>
+                    ${assignment.date}
+                </td>
                 <td data-label="Date">${assignment.date}</td>
                 <td data-label="Location">${assignment.location}</td>
                 <td data-label="Skater">${assignment.skaters.join(', ')}</td>
