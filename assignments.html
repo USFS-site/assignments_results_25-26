@@ -225,15 +225,7 @@
     <div class="competition-table-wrapper">
         <table class="competition-table">
             <thead>
-                <tr>
-                    <th>Competition</th>
-                    <th>Women</th>
-                    <th>Men</th>
-                    <th>Pairs</th>
-                    <th>Ice Dance</th>
-                    <th>Synchronized</th>
-                </tr>
-            </thead>
+                </thead>
             <tbody id="competitionResults">
                 </tbody>
         </table>
@@ -243,25 +235,35 @@
 <script>
     let assignmentsData = [];
     let disciplineHeaders = [];
+    let headers = [];
 
     async function fetchAssignments() {
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9FRxYE8Vh7gaJG_vYJ8Fgj15UI-6e6YAf_AS3KDg5fAaVCZMfHvQbGH5AWIPQc7BxcELxcyZTMd1J/pub?gid=0&single=true&output=csv';
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9FRxYE8Vh7gaJG_vYJ8Fgj15UI-6e6YAf_AS3KDg5fAaVCZMfHvQbGH5AWIPQc7BxcELxcyZTMd1J/pub?output=csv';
         
         try {
             const response = await fetch(csvUrl);
             const csvText = await response.text();
             
             const rows = csvText.trim().split('\n').filter(row => row.trim() !== '');
-            const headers = rows[0].split(',').map(header => header.trim());
-            disciplineHeaders = headers.filter(header => header !== 'COMPETITION');
+            
+            // Extract the headers, splitting by capital letters
+            const headersRow = rows[0];
+            headers = headersRow.match(/([A-Z][a-z\s]+)/g).map(h => h.trim().toUpperCase());
+            
+            // Assume the first 3 columns are general info, rest are disciplines
+            const fixedHeaders = ['COMPETITION', 'LOCATION', 'DATES'];
+            disciplineHeaders = headers.filter(header => !fixedHeaders.includes(header));
             
             assignmentsData = rows.slice(1).map(row => {
-                const columns = row.split(',');
                 let dataObject = {};
-                headers.forEach((header, index) => {
-                    let value = columns[index] ? columns[index].trim() : '';
+                let currentPos = 0;
+                headers.forEach(header => {
+                    let nextHeaderPos = headersRow.indexOf(headers[headers.indexOf(header) + 1], currentPos);
+                    let value = nextHeaderPos !== -1 ? row.substring(currentPos, nextHeaderPos).trim() : row.substring(currentPos).trim();
+                    currentPos = nextHeaderPos;
+
                     if (disciplineHeaders.includes(header)) {
-                        dataObject[header.toLowerCase().replace(' ', '_')] = value.split(';').map(s => s.trim());
+                        dataObject[header.toLowerCase().replace(' ', '_')] = value.split(/\s(?=[A-Z])/).map(s => s.trim()).filter(s => s.length > 0);
                     } else {
                         dataObject[header.toLowerCase()] = value;
                     }
@@ -269,7 +271,7 @@
                 return dataObject;
             });
             
-            updateTableHeaders();
+            updateTableHeaders(headers);
             filterAssignments();
         } catch (error) {
             document.getElementById('resultsInfo').textContent = 'Failed to load data. Please check the URL and your internet connection.';
@@ -277,12 +279,10 @@
         }
     }
 
-    function updateTableHeaders() {
+    function updateTableHeaders(headers) {
         const theadRow = document.querySelector('.competition-table thead tr');
         theadRow.innerHTML = ''; // Clear existing headers
-        theadRow.innerHTML += '<th>Competition</th>'; // Add fixed header
-
-        disciplineHeaders.forEach(header => {
+        headers.forEach(header => {
             theadRow.innerHTML += `<th>${header}</th>`;
         });
     }
@@ -322,19 +322,24 @@
         const tbody = document.getElementById('competitionResults');
         tbody.innerHTML = '';
         if (assignments.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No assignments found.</td></tr>';
+            const colspan = headers.length > 0 ? headers.length : 1;
+            tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center;">No assignments found.</td></tr>`;
             return;
         }
         
         assignments.forEach(assignment => {
             const row = document.createElement('tr');
             
-            let htmlContent = `<td data-label="Competition">${assignment.competition}</td>`;
-
-            disciplineHeaders.forEach(discipline => {
-                const skatersList = assignment[discipline.toLowerCase().replace(' ', '_')];
-                const displayNames = skatersList.length > 0 ? skatersList.join(', ') : '';
-                htmlContent += `<td data-label="${discipline}">${displayNames}</td>`;
+            let htmlContent = '';
+            headers.forEach(header => {
+                const key = header.toLowerCase().replace(' ', '_');
+                let value;
+                if (disciplineHeaders.includes(header)) {
+                    value = assignment[key].join(', ');
+                } else {
+                    value = assignment[key];
+                }
+                htmlContent += `<td data-label="${header}">${value}</td>`;
             });
 
             row.innerHTML = htmlContent;
@@ -351,3 +356,5 @@
         fetchAssignments();
     });
 </script>
+</body>
+</html>
