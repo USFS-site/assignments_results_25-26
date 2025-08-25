@@ -92,12 +92,6 @@
             table-layout: fixed;
         }
         
-        .competition-table th:nth-child(1) { width: 30%; } /* Competition Name */
-        .competition-table th:nth-child(2) { width: 10%; } /* Date */
-        .competition-table th:nth-child(3) { width: 25%; } /* Location */
-        .competition-table th:nth-child(4) { width: 25%; } /* Skater */
-        .competition-table th:nth-child(5) { width: 10%; } /* Discipline */
-
         .competition-table th,
         .competition-table td {
             padding: 8px;
@@ -215,11 +209,11 @@
 
     <div class="filter-section">
         <div class="filter-group">
-            <label for="competitionName">Competition</label>
+            <label for="competitionName">Competition Name</label>
             <input id="competitionName" name="competitionName" placeholder="e.g., Skate America" type="text" />
         </div>
         <div class="filter-group">
-            <label for="skaterName">Last Name</label>
+            <label for="skaterName">Skater's Last Name</label>
             <input id="skaterName" name="skaterName" placeholder="e.g., Brown" type="text" />
         </div>
         <div class="filter-group">
@@ -233,10 +227,11 @@
             <thead>
                 <tr>
                     <th>Competition</th>
-                    <th>Date</th>
-                    <th>Location</th>
-                    <th>Skater</th>
-                    <th>Discipline</th>
+                    <th>Women</th>
+                    <th>Men</th>
+                    <th>Pairs</th>
+                    <th>Ice Dance</th>
+                    <th>Synchronized</th>
                 </tr>
             </thead>
             <tbody id="competitionResults">
@@ -247,6 +242,7 @@
 
 <script>
     let assignmentsData = [];
+    let disciplineHeaders = [];
 
     async function fetchAssignments() {
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9FRxYE8Vh7gaJG_vYJ8Fgj15UI-6e6YAf_AS3KDg5fAaVCZMfHvQbGH5AWIPQc7BxcELxcyZTMd1J/pub?gid=0&single=true&output=csv';
@@ -255,21 +251,17 @@
             const response = await fetch(csvUrl);
             const csvText = await response.text();
             
-            // Split the text into rows and remove empty lines
             const rows = csvText.trim().split('\n').filter(row => row.trim() !== '');
-
-            // The first row is the header
             const headers = rows[0].split(',').map(header => header.trim());
+            disciplineHeaders = headers.filter(header => header !== 'COMPETITION');
             
-            // Map the data rows to objects using the headers
             assignmentsData = rows.slice(1).map(row => {
                 const columns = row.split(',');
                 let dataObject = {};
                 headers.forEach((header, index) => {
                     let value = columns[index] ? columns[index].trim() : '';
-                    if (header === "Skaters") {
-                        // Split the skaters string by semicolon and trim each name
-                        dataObject[header.toLowerCase()] = value.split(';').map(s => s.trim());
+                    if (disciplineHeaders.includes(header)) {
+                        dataObject[header.toLowerCase().replace(' ', '_')] = value.split(';').map(s => s.trim());
                     } else {
                         dataObject[header.toLowerCase()] = value;
                     }
@@ -277,11 +269,22 @@
                 return dataObject;
             });
             
+            updateTableHeaders();
             filterAssignments();
         } catch (error) {
             document.getElementById('resultsInfo').textContent = 'Failed to load data. Please check the URL and your internet connection.';
             console.error('Error fetching assignments:', error);
         }
+    }
+
+    function updateTableHeaders() {
+        const theadRow = document.querySelector('.competition-table thead tr');
+        theadRow.innerHTML = ''; // Clear existing headers
+        theadRow.innerHTML += '<th>Competition</th>'; // Add fixed header
+
+        disciplineHeaders.forEach(header => {
+            theadRow.innerHTML += `<th>${header}</th>`;
+        });
     }
 
     function filterAssignments() {
@@ -294,11 +297,15 @@
             }
 
             if (skaterName) {
-                const foundSkater = assignment.skaters.some(skater => {
-                    const nameOnly = skater.split('(')[0].trim();
-                    const names = nameOnly.split(' ');
-                    const lastName = names[names.length - 1].toLowerCase();
-                    return lastName.includes(skaterName);
+                const foundSkater = disciplineHeaders.some(discipline => {
+                    const skatersList = assignment[discipline.toLowerCase().replace(' ', '_')];
+                    if (!skatersList) return false;
+                    return skatersList.some(skater => {
+                        const nameOnly = skater.split('(')[0].trim();
+                        const names = nameOnly.split(' ');
+                        const lastName = names[names.length - 1].toLowerCase();
+                        return lastName.includes(skaterName);
+                    });
                 });
                 if (!foundSkater) {
                     return false;
@@ -318,15 +325,19 @@
             tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No assignments found.</td></tr>';
             return;
         }
+        
         assignments.forEach(assignment => {
             const row = document.createElement('tr');
-            row.innerHTML = `
-                <td data-label="Competition">${assignment.competition}</td>
-                <td data-label="Date">${assignment.date}</td>
-                <td data-label="Location">${assignment.location}</td>
-                <td data-label="Skater">${assignment.skaters.join(', ')}</td>
-                <td data-label="Discipline"><span class="discipline-badge">${assignment.discipline}</span></td>
-            `;
+            
+            let htmlContent = `<td data-label="Competition">${assignment.competition}</td>`;
+
+            disciplineHeaders.forEach(discipline => {
+                const skatersList = assignment[discipline.toLowerCase().replace(' ', '_')];
+                const displayNames = skatersList.length > 0 ? skatersList.join(', ') : '';
+                htmlContent += `<td data-label="${discipline}">${displayNames}</td>`;
+            });
+
+            row.innerHTML = htmlContent;
             tbody.appendChild(row);
         });
     }
@@ -336,11 +347,7 @@
         resultsInfo.textContent = `Showing ${count} ${count === 1 ? 'assignment' : 'assignments'}`;
     }
 
-    // Load data from Google Sheet when the page loads
     document.addEventListener('DOMContentLoaded', () => {
         fetchAssignments();
     });
 </script>
-
-</body>
-</html>
