@@ -262,8 +262,8 @@
                     competition: columns[0] ? columns[0].trim() : '',
                     date: columns[1] ? columns[1].trim() : '',
                     location: columns[2] ? columns[2].trim() : '',
-                    skaters: columns[3] ? columns[3].trim().split(';').map(s => s.trim()) : [],
-                    discipline: columns[4] ? columns[4].trim() : '',
+                    discipline: columns[3] ? columns[3].trim() : '',
+                    skaters: columns[4] ? columns[4].trim().split(';').map(s => s.trim()) : [],
                 };
             });
             
@@ -285,8 +285,12 @@
 
             if (skaterName) {
                 const foundSkater = assignment.skaters.some(skater => {
-                    const names = skater.split(' ');
+                    // This is the updated part to handle both name formats
+                    // It extracts the name before any parentheses
+                    const nameOnly = skater.split('(')[0].trim();
+                    const names = nameOnly.split(' ');
                     const lastName = names[names.length - 1].toLowerCase();
+                    
                     return lastName.includes(skaterName);
                 });
                 if (!foundSkater) {
