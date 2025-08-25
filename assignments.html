@@ -255,16 +255,26 @@
             const response = await fetch(csvUrl);
             const csvText = await response.text();
             
-            const rows = csvText.trim().split('\n').slice(1);
-            assignmentsData = rows.map(row => {
+            // Split the text into rows and remove empty lines
+            const rows = csvText.trim().split('\n').filter(row => row.trim() !== '');
+
+            // The first row is the header
+            const headers = rows[0].split(',').map(header => header.trim());
+            
+            // Map the data rows to objects using the headers
+            assignmentsData = rows.slice(1).map(row => {
                 const columns = row.split(',');
-                return {
-                    competition: columns[0] ? columns[0].trim() : '',
-                    date: columns[1] ? columns[1].trim() : '',
-                    location: columns[2] ? columns[2].trim() : '',
-                    discipline: columns[3] ? columns[3].trim() : '',
-                    skaters: columns[4] ? columns[4].trim().split(';').map(s => s.trim()) : [],
-                };
+                let dataObject = {};
+                headers.forEach((header, index) => {
+                    let value = columns[index] ? columns[index].trim() : '';
+                    if (header === "Skaters") {
+                        // Split the skaters string by semicolon and trim each name
+                        dataObject[header.toLowerCase()] = value.split(';').map(s => s.trim());
+                    } else {
+                        dataObject[header.toLowerCase()] = value;
+                    }
+                });
+                return dataObject;
             });
             
             filterAssignments();
@@ -285,12 +295,9 @@
 
             if (skaterName) {
                 const foundSkater = assignment.skaters.some(skater => {
-                    // This is the updated part to handle both name formats
-                    // It extracts the name before any parentheses
                     const nameOnly = skater.split('(')[0].trim();
                     const names = nameOnly.split(' ');
                     const lastName = names[names.length - 1].toLowerCase();
-                    
                     return lastName.includes(skaterName);
                 });
                 if (!foundSkater) {
@@ -314,11 +321,7 @@
         assignments.forEach(assignment => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td data-label="Competition">
-                    ${assignment.competition}<br>
-                    ${assignment.location}<br>
-                    ${assignment.date}
-                </td>
+                <td data-label="Competition">${assignment.competition}</td>
                 <td data-label="Date">${assignment.date}</td>
                 <td data-label="Location">${assignment.location}</td>
                 <td data-label="Skater">${assignment.skaters.join(', ')}</td>
