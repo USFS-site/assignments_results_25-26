@@ -1,6 +1,11 @@
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title></title>
-<style type="text/css">/* Widget Container */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>International Assignments</title>
+    <style type="text/css">
+        /* Widget Container */
         .competition-finder {
             font-family: Arial, sans-serif;
             max-width: 1440px;
@@ -124,7 +129,6 @@
             text-decoration: none;
         }
         
-    
         .event-link:hover {
             text-decoration: underline;
         }
@@ -202,62 +206,68 @@
                 border-bottom: none;
             }
         }
-</style>
+    </style>
+</head>
+<body>
+
 <div class="competition-finder">
-<h2>International Assignments</h2>
+    <h2>International Assignments</h2>
 
-<div class="filter-section">
-<div class="filter-group"><label for="competitionName">Competition Name</label> <input id="competitionName" name="competitionName" placeholder="e.g., Skate America" type="text" /></div>
-
-<div class="filter-group"><label for="skaterName">Skater's Last Name</label> <input id="skaterName" name="skaterName" placeholder="e.g., Brown" type="text" /></div>
-
-<div class="filter-group"><button class="search-btn" onclick="filterAssignments()" type="button">Search</button></div>
+    <div class="filter-section">
+        <div class="filter-group">
+            <label for="competitionName">Competition Name</label>
+            <input id="competitionName" name="competitionName" placeholder="e.g., Skate America" type="text" />
+        </div>
+        <div class="filter-group">
+            <label for="skaterName">Skater's Last Name</label>
+            <input id="skaterName" name="skaterName" placeholder="e.g., Brown" type="text" />
+        </div>
+        <div class="filter-group">
+            <button class="search-btn" onclick="filterAssignments()" type="button">Search</button>
+        </div>
+    </div>
+    
+    <div class="results-info" id="resultsInfo">Loading data...</div>
+    <div class="competition-table-wrapper">
+        <table class="competition-table">
+            <thead>
+                <tr>
+                    <th>Competition</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Skater</th>
+                    <th>Discipline</th>
+                </tr>
+            </thead>
+            <tbody id="competitionResults">
+                </tbody>
+        </table>
+    </div>
 </div>
 
-<div class="results-info" id="resultsInfo">Loading data...</div>
-
-<div class="competition-table-wrapper">
-<table class="competition-table">
-	<thead>
-		<tr>
-			<th>Competition</th>
-			<th>Date</th>
-			<th>Location</th>
-			<th>Skater</th>
-			<th>Discipline</th>
-		</tr>
-	</thead>
-	<tbody id="competitionResults">
-	</tbody>
-</table>
-</div>
-</div>
 <script>
     let assignmentsData = [];
 
     async function fetchAssignments() {
-        // You MUST replace this with the published CSV URL from your Google Sheet.
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9FRxYE8Vh7gaJG_vYJ8Fgj15UI-6e6YAf_AS3KDg5fAaVCZMfHvQbGH5AWIPQc7BxcELxcyZTMd1J/pub?gid=0&single=true&output=csv';
         
         try {
             const response = await fetch(csvUrl);
             const csvText = await response.text();
             
-            // Parse CSV data
-            const rows = csvText.trim().split('\n').slice(1); // Skip header row
+            const rows = csvText.trim().split('\n').slice(1);
             assignmentsData = rows.map(row => {
                 const columns = row.split(',');
                 return {
-                    competition: columns[0].trim(),
-                    date: columns[1].trim(),
-                    location: columns[2].trim(),
-                    skaters: columns[3].trim().split(';'), // Use a different separator like ';' for multiple skaters
-                    discipline: columns[4].trim(),
+                    competition: columns[0] ? columns[0].trim() : '',
+                    date: columns[1] ? columns[1].trim() : '',
+                    location: columns[2] ? columns[2].trim() : '',
+                    skaters: columns[3] ? columns[3].trim().split(';').map(s => s.trim()) : [],
+                    discipline: columns[4] ? columns[4].trim() : '',
                 };
             });
             
-            filterAssignments(); // Populate the table with the fetched data
-            document.getElementById('resultsInfo').textContent = `Showing ${assignmentsData.length} assignments`;
+            filterAssignments();
         } catch (error) {
             document.getElementById('resultsInfo').textContent = 'Failed to load data. Please check the URL and your internet connection.';
             console.error('Error fetching assignments:', error);
@@ -275,7 +285,8 @@
 
             if (skaterName) {
                 const foundSkater = assignment.skaters.some(skater => {
-                    const lastName = skater.split(' ').slice(-1)[0].toLowerCase();
+                    const names = skater.split(' ');
+                    const lastName = names[names.length - 1].toLowerCase();
                     return lastName.includes(skaterName);
                 });
                 if (!foundSkater) {
@@ -319,3 +330,6 @@
         fetchAssignments();
     });
 </script>
+
+</body>
+</html>
